@@ -260,7 +260,7 @@ graph TB
                 subgraph TargetPod["Pod: vulnerable-php (127.0.0.1 Pod Network)"]
                     NginxCont["Contenedor: nginx:alpine<br/>- Puerto :80 HTTP<br/>- Proxy FastCGI a :9000<br/>- ConfigMap: nginx.conf"]
                     PhpCont["Contenedor: php:8.4.26-fpm<br/>- Puerto :9000 FastCGI<br/>- memory_limit = 128M<br/>- ConfigMap: custom.ini"]
-                    NginxCont <-->|IPC / Localhost Loopback :9000| PhpCont
+                    NginxCont <-->|"IPC / Localhost Loopback :9000"| PhpCont
                 end
 
                 NetPol["NetworkPolicy: isolate-sandbox<br/>- Ingress: Solo Pods locales<br/>- Egress: Solo Namespace local y DNS"]
@@ -268,7 +268,7 @@ graph TB
         end
     end
 
-    KaliCont -->|HTTP Interno :80<br/><i>http://vulnerable-php:80</i>| NginxCont
+    KaliCont -->|"HTTP Interno :80 - http://vulnerable-php:80"| NginxCont
 ```
 
 ### 6.3 Correspondencia de Componentes Lógicos a Nodos Físicos

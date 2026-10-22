@@ -5,8 +5,8 @@
 
 ---
 
-## 📌 1. Resumen Ejecutivo del Documento Analizado
-A partir del análisis exhaustivo del archivo [`Arquitectura_de_Ciberdefensa_Avanzada (1).pdf`](./Arquitectura_de_Ciberdefensa_Avanzada%20(1).pdf), se extraen los siguientes componentes estructurales:
+## 📌 1. Resumen Ejecutivo del Laboratorio
+A partir del análisis exhaustivo de la arquitectura de la Masterclass, se extraen los siguientes componentes estructurales:
 
 1. **Naturaleza del Fallo:**
    - No es un error en código PHP de usuario (WordPress, Drupal, Magento, etc.), sino un fallo interno en el motor escrito en C de PHP.
@@ -42,7 +42,6 @@ flowchart LR
 
 ```
 PHP-Exploit/
-├── Arquitectura_de_Ciberdefensa_Avanzada (1).pdf  # Presentación original de la Masterclass
 ├── README.md                                     # Guía para el Instructor y Visión General
 ├── ARQUITECTURA_ISO42010_ARCADIA.md              # Documento de Arquitectura ISO 42010 (ARCADIA & MITRE)
 ├── GUIA_LABORATORIO_ESTUDIANTE.md                 # Manual paso a paso para los estudiantes
@@ -89,7 +88,7 @@ graph TB
             subgraph TargetNode["Nodo Objetivo (Blue Target)"]
                 WebProxy["Contenedor: NGINX<br/>Puerto :80 (Proxy FastCGI)"]
                 PhpCore["Contenedor: PHP 8.4.26-FPM<br/>Puerto :9000 (Zend Core)"]
-                WebProxy <-->|FastCGI Loopback :9000| PhpCore
+                WebProxy <-->|"FastCGI Loopback :9000"| PhpCore
             end
 
             Isolation["Directiva de Aislamiento: NetworkPolicy<br/><b>[Bloqueo de Ingress desde WAN / Sin puertos hacia Host]</b>"]
@@ -98,7 +97,7 @@ graph TB
         end
     end
 
-    Kali -->|Peticiones HTTP :80 (Tráfico Interno Simulado)| WebProxy
+    Kali -->|"Peticiones HTTP :80 - Tráfico Interno Simulado"| WebProxy
 ```
 
 ---

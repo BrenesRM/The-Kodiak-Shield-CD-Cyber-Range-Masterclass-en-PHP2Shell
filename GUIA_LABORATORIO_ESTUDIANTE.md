@@ -62,7 +62,7 @@ graph TB
             subgraph Target["POD BLUE TARGET (vulnerable-php)"]
                 Nginx["NGINX Proxy<br/>Web :80"]
                 PhpFpm["PHP 8.4.26-FPM<br/>FastCGI :9000"]
-                Nginx <-->|IPC / Localhost Loopback :9000| PhpFpm
+                Nginx <-->|"IPC / Localhost Loopback :9000"| PhpFpm
             end
 
             NetPolicy["NetworkPolicy / Red Bridge Interna<br/><b>[Sin salida a WAN / Sin acceso al Host]</b>"]
@@ -71,7 +71,7 @@ graph TB
         end
     end
 
-    Kali -->|HTTP Interno Simulado :80<br/><i>http://vulnerable-php:80</i>| Nginx
+    Kali -->|"HTTP Interno Simulado :80 - http://vulnerable-php:80"| Nginx
 ```
 
 ---
