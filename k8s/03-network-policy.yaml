@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-sandbox
+  namespace: php2shell-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Permitir únicamente tráfico dentro del mismo namespace (Attacker -> Target)
+    - from:
+        - podSelector: {}
+  egress:
+    # Permitir tráfico únicamente dentro del mismo namespace y resolución DNS básica
+    - to:
+        - podSelector: {}
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

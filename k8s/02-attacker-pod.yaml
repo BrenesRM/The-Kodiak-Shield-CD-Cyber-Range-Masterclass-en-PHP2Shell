@@ -1,0 +1,127 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: attacker-scripts
+  namespace: php2shell-sandbox
+data:
+  test_multipart_audit.py: |
+    #!/usr/bin/env python3
+    """
+    Laboratorio PHP2Shell (CVE-2026-109618 / CVE-2026-109619)
+    Script didáctico de auditoría y análisis de respuesta OOM.
+    Comprueba el comportamiento del servidor ante peticiones multipart controladas.
+    """
+    import urllib.request
+    import urllib.error
+    import sys
+    import time
+
+    TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "http://vulnerable-php:80"
+
+    print("================================================================")
+    print(" [*] KODIAK SHIELD CD CYBER RANGE - AUDITORÍA EDUCATIVA PHP2SHELL")
+    print(f" [*] Objetivo: {TARGET_URL}")
+    print("================================================================")
+
+    # 1. Petición base (Health Check)
+    print("\n[+] Paso 1: Verificando conectividad y versión de PHP...")
+    try:
+        req = urllib.request.Request(TARGET_URL)
+        with urllib.request.urlopen(req, timeout=5) as response:
+            body = response.read().decode('utf-8')
+            print(f"    [OK] Código HTTP: {response.status}")
+            print(f"    [INFO] Respuesta del servidor:\n{body}")
+    except Exception as e:
+        print(f"    [!] Error al conectar con el objetivo: {e}")
+        sys.exit(1)
+
+    # 2. Prueba de auditoría de cabecera multipart y boundary
+    print("\n[+] Paso 2: Enviando petición de prueba de cabecera multipart/form-data...")
+    boundary = "----CyberRangeBoundaryX99"
+    headers = {
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "User-Agent": "CyberRange-Auditor/1.0"
+    }
+
+    test_payload = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="test_field"\r\n\r\n'
+        f"kodiak_shield_cd_safe_probe\r\n"
+        f"--{boundary}--\r\n"
+    ).encode('utf-8')
+
+    try:
+        req = urllib.request.Request(TARGET_URL, data=test_payload, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as response:
+            print(f"    [OK] Petición procesada exitosamente. Código: {response.status}")
+    except urllib.error.HTTPError as e:
+        if e.code == 403:
+            print(f"    [SHIELD] Código 403 Forbidden detectado -> Mitigación WAF/Nginx activa.")
+        elif e.code >= 500:
+            print(f"    [ALERT] Código {e.code} Server Error detectado en parseo de multipart.")
+        else:
+            print(f"    [INFO] Código HTTP retornado: {e.code}")
+    except Exception as e:
+        print(f"    [!] Error de transporte: {e}")
+
+    # 3. Prueba de límite de memoria simulado
+    print("\n[+] Paso 3: Análisis de umbral de memoria (Simulación controlada)...")
+    print("    Enviando payload con tamaño creciente para observar la respuesta del runtime...")
+    
+    # Payload mediano de 2MB para verificar comportamiento sin saturar la red
+    sample_size_mb = 2
+    dummy_data = b"A" * (sample_size_mb * 1024 * 1024)
+    simulated_payload = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="sample_file"; filename="sample.bin"\r\n'
+        f"Content-Type: application/octet-stream\r\n\r\n"
+    ).encode('utf-8') + dummy_data + f"\r\n--{boundary}--\r\n".encode('utf-8')
+
+    start_time = time.time()
+    try:
+        req = urllib.request.Request(TARGET_URL, data=simulated_payload, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=10) as response:
+            duration = round(time.time() - start_time, 2)
+            print(f"    [INFO] Carga de {sample_size_mb}MB completada en {duration}s. Código: {response.status}")
+    except urllib.error.HTTPError as e:
+        duration = round(time.time() - start_time, 2)
+        print(f"    [RESULTADO] Código HTTP: {e.code} ({e.reason}) en {duration}s")
+        if e.code == 403:
+            print("    [BLUE TEAM] El WAF/Nginx bloqueó la petición antes de llegar al motor PHP.")
+        elif e.code == 502 or e.code == 504:
+            print("    [CRASH AUDIT] PHP-FPM cerró el socket de forma abrupta (Fallo en worker / Bad Gateway).")
+    except Exception as e:
+        print(f"    [!] Excepción: {e}")
+
+    print("\n================================================================")
+    print(" [*] Auditoría de diagnóstico completada.")
+    print("================================================================")
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attacker-pod
+  namespace: php2shell-sandbox
+  labels:
+    app: attacker-pod
+    role: attacker
+spec:
+  containers:
+    - name: kali-attacker
+      image: kalilinux/kali-rolling
+      command: ["/bin/sh", "-c", "sleep infinity"]
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+        limits:
+          memory: "1024Mi"
+          cpu: "1000m"
+      volumeMounts:
+        - name: scripts
+          mountPath: /opt/scripts
+  volumes:
+    - name: scripts
+      configMap:
+        name: attacker-scripts
+        defaultMode: 0755

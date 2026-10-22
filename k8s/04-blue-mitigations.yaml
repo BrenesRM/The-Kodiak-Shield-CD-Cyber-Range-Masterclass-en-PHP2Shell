@@ -1,0 +1,113 @@
+# ==============================================================================
+# FASE 4 (BLUE TEAM): Mitigaciones temporales en NGINX y php.ini (Slide 13 del PDF)
+# ==============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-target-config-mitigated
+  namespace: php2shell-sandbox
+data:
+  # Mitigación en tiempo de ejecución (php.ini)
+  # - memory_limit = -1 (evita la activación predecible del OOM en parseo)
+  # - session.upload_progress.enabled = 0 (desactiva el rastreo de progreso de sesión obsoleto)
+  php.ini: |
+    [PHP]
+    engine = On
+    short_open_tag = Off
+    precision = 14
+    output_buffering = 4096
+    zlib.output_compression = Off
+    implicit_flush = Off
+    max_execution_time = 30
+    max_input_time = 60
+    memory_limit = -1
+    error_reporting = E_ALL
+    display_errors = On
+    display_startup_errors = On
+    log_errors = On
+    report_memleaks = On
+    post_max_size = 256M
+    upload_max_filesize = 256M
+    
+    [Session]
+    session.save_handler = files
+    session.use_strict_mode = 0
+    session.use_cookies = 1
+    session.name = PHPSESSID
+    session.auto_start = 0
+    session.upload_progress.enabled = 0
+
+  index.php: |
+    <?php
+    header('Content-Type: application/json; charset=utf-8');
+    $response = [
+        'status' => 'online',
+        'service' => 'PHP2Shell Sandbox Target (BLUE TEAM MITIGATED)',
+        'php_version' => PHP_VERSION,
+        'sapi' => php_sapi_name(),
+        'memory_limit' => ini_get('memory_limit'),
+        'session_upload_progress' => ini_get('session.upload_progress.enabled'),
+        'mitigation_active' => true,
+        'server_time' => date('Y-m-d H:i:s')
+    ];
+    echo json_encode($response, JSON_PRETTY_PRINT);
+    ?>
+
+  # Mitigación perimetral en Servidor Web (NGINX)
+  # Rechaza cualquier petición con Content-Type multipart/form-data devolviendo HTTP 403
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        sendfile on;
+        keepalive_timeout 65;
+        client_max_body_size 300M;
+
+        server {
+            listen 80;
+            server_name localhost;
+            root /var/www/html;
+            index index.php index.html;
+
+            # [REGLA BLUE TEAM] Filtrado perimetral contra multipart
+            if ($http_content_type ~* "multipart/form-data") {
+                return 403 "Blocked by Blue Team WAF Filter: multipart/form-data prohibited during vulnerability window\n";
+            }
+
+            location / {
+                try_files $uri $uri/ /index.php?$query_string;
+            }
+
+            location ~ \.php$ {
+                include fastcgi_params;
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
+                fastcgi_param PATH_INFO $fastcgi_path_info;
+                fastcgi_read_timeout 60s;
+            }
+        }
+    }
+---
+# Parche sobre el despliegue existente para usar la configuración mitigada
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulnerable-php
+  namespace: php2shell-sandbox
+spec:
+  template:
+    spec:
+      volumes:
+        - name: php-config
+          configMap:
+            name: php-target-config-mitigated
+        - name: nginx-config
+          configMap:
+            name: php-target-config-mitigated
+        - name: web-root
+          configMap:
+            name: php-target-config-mitigated

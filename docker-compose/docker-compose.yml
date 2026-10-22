@@ -1,0 +1,60 @@
+services:
+  # Pod / Contenedor Objetivo: PHP 8.4.26 vulnerable (Slide 9 del PDF)
+  target-php:
+    image: php:8.4.26-fpm
+    container_name: target-php
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html:ro
+      - ./php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    networks:
+      cyber_range_net:
+        aliases:
+          - vulnerable-php
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+
+  # Servidor Web Frontal NGINX (Reverse proxy FastCGI hacia target-php)
+  target-web:
+    image: nginx:alpine
+    container_name: target-web
+    restart: unless-stopped
+    depends_on:
+      - target-php
+    volumes:
+      - ./src:/var/www/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      cyber_range_net:
+        aliases:
+          - web-target
+    # NOTA PEDAGÓGICA: No exponemos puertos al host de Windows para garantizar
+    # aislamiento estricto (Slide 6 y 7). Solo accesible desde 'attacker-kali'.
+
+  # Pod / Contenedor Red Team: Kali Linux para auditoría (Slide 10 del PDF)
+  attacker-kali:
+    image: kalilinux/kali-rolling
+    container_name: attacker-kali
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    command: /bin/sh -c "apt-get update && apt-get install -y curl python3 python3-pip && sleep infinity"
+    volumes:
+      - ../scripts:/opt/scripts:ro
+    networks:
+      cyber_range_net:
+        aliases:
+          - attacker-pod
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+
+networks:
+  cyber_range_net:
+    driver: bridge
+    internal: true # Aislamiento total: la red no tiene acceso directo al host ni a Internet

@@ -1,0 +1,15 @@
+# ==============================================================================
+# FASE 5: Remediación Definitiva - Actualización del Runtime de PHP (Slide 14)
+# ==============================================================================
+# Actualiza la imagen del contenedor PHP-FPM de 8.4.26 a 8.4.27 (versión con parche oficial).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulnerable-php
+  namespace: php2shell-sandbox
+spec:
+  template:
+    spec:
+      containers:
+        - name: php-fpm
+          image: php:8.4.27-fpm

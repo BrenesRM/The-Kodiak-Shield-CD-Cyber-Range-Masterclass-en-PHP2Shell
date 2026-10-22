@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: php2shell-sandbox
+  labels:
+    environment: cyber-range
+    app.kubernetes.io/part-of: php2shell-masterclass
+    pod-security.kubernetes.io/enforce: baseline
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: sandbox-quota
+  namespace: php2shell-sandbox
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi

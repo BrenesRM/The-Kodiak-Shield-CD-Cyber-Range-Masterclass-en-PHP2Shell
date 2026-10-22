@@ -1,0 +1,44 @@
+[
+  {
+    "category": "Kubernetes",
+    "name": "Client Dry-Run Schema Validation",
+    "passed": true,
+    "details": "Validados 11 recursos K8s sin errores."
+  },
+  {
+    "category": "Docker Compose",
+    "name": "YAML Syntax & Service Dependencies",
+    "passed": true,
+    "details": "Configuración validada correctamente por Docker Compose CLI."
+  },
+  {
+    "category": "PHP Runtime Script",
+    "name": "Static Code Inspection (index.php)",
+    "passed": true,
+    "details": "Sintaxis PHP válida y estructura JSON confirmada."
+  },
+  {
+    "category": "Audit Suite",
+    "name": "Vulnerable Version Detection (8.4.26)",
+    "passed": true,
+    "details": "Detectó correctamente la versión vulnerable y memory_limit de 128M."
+  },
+  {
+    "category": "Audit Suite",
+    "name": "Blue Team WAF 403 Forbidden Filter Verification",
+    "passed": true,
+    "details": "Detectó e interpretó exitosamente la regla perimetral de NGINX."
+  },
+  {
+    "category": "Audit Suite",
+    "name": "PHP-FPM Worker OOM Crash Interpretation (502)",
+    "passed": true,
+    "details": "Interpretó correctamente el error 502 como un fallo de worker OOM."
+  },
+  {
+    "category": "Audit Suite",
+    "name": "Patched Version Detection (8.4.27)",
+    "passed": true,
+    "details": "Reconoció la versión parcheada oficial de mitigación."
+  }
+]
