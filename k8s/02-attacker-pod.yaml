@@ -108,7 +108,8 @@ metadata:
 spec:
   containers:
     - name: kali-attacker
-      image: kalilinux/kali-rolling
+      image: php2shell-attacker:latest
+      imagePullPolicy: IfNotPresent
       command: ["/bin/sh", "-c", "sleep infinity"]
       resources:
         requests:

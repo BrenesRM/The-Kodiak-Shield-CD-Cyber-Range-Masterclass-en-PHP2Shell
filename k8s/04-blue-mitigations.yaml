@@ -92,15 +92,67 @@ data:
         }
     }
 ---
-# Parche sobre el despliegue existente para usar la configuración mitigada
+# Despliegue actualizado para usar la configuración mitigada (WAF 403 y php.ini sin OOM trigger)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vulnerable-php
   namespace: php2shell-sandbox
+  labels:
+    app: vulnerable-php
+    role: target
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vulnerable-php
   template:
+    metadata:
+      labels:
+        app: vulnerable-php
+        role: target
     spec:
+      containers:
+        - name: php-fpm
+          image: php:8.4.26-fpm
+          ports:
+            - containerPort: 9000
+              name: fastcgi
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: php-config
+              mountPath: /usr/local/etc/php/conf.d/custom.ini
+              subPath: php.ini
+            - name: web-root
+              mountPath: /var/www/html/index.php
+              subPath: index.php
+        
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: web-root
+              mountPath: /var/www/html/index.php
+              subPath: index.php
+
       volumes:
         - name: php-config
           configMap:

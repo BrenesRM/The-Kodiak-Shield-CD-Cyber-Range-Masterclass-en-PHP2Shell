@@ -36,12 +36,15 @@ services:
 
   # Pod / Contenedor Red Team: Kali Linux para auditoría (Slide 10 del PDF)
   attacker-kali:
-    image: kalilinux/kali-rolling
+    image: php2shell-attacker:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.attacker
     container_name: attacker-kali
     restart: unless-stopped
     stdin_open: true
     tty: true
-    command: /bin/sh -c "apt-get update && apt-get install -y curl python3 python3-pip && sleep infinity"
+    command: ["sleep", "infinity"]
     volumes:
       - ../scripts:/opt/scripts:ro
     networks:

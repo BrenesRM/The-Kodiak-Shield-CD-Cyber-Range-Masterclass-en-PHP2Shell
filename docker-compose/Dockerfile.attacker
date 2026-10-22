@@ -1,0 +1,11 @@
+FROM kalilinux/kali-rolling
+
+# Herramientas de auditoría requeridas para el Cyber Range
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    curl \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+CMD ["sleep", "infinity"]
